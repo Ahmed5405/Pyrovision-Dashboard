@@ -4,13 +4,14 @@ import numpy as np
 import plotly.express as px
 from datetime import datetime
 import requests
+from sklearn.linear_model import LogisticRegression
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # --- Telegram Notification Function ---
 def send_telegram_alert(message):
-    # Your Bot Token from BotFather
     token = "8525068051:AAHheDTQ-PIXEWvvIIcokuKF3pwyHr0gPwE"
-    # Your Personal Chat ID (Replace with your ID from @userinfobot)
-    chat_id = "1655340743" 
+    chat_id = "1655340743"
     url = f"https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}"
     try:
         requests.get(url, timeout=5)
@@ -26,23 +27,23 @@ st.set_page_config(
 
 # 2. Professional CSS Styling (Dark Mode)
 st.markdown("""
-    <style>
-    .main { background-color: #0d1117; color: #e1e1e1; }
-    .stMetric { 
-        border: 1px solid #30363d; 
-        padding: 20px; 
-        border-radius: 15px; 
-        background: linear-gradient(145deg, #161b22, #0d1117); 
-    }
-    .fire-text { 
-        color: #ff4b4b; 
-        font-weight: bold; 
-        text-shadow: 0 0 10px #ff4b4b;
-        animation: blinker 1.5s linear infinite; 
-    }
-    @keyframes blinker { 50% { opacity: 0.3; } }
-    </style>
-    """, unsafe_allow_html=True)
+<style>
+.main { background-color: #0d1117; color: #e1e1e1; }
+.stMetric {
+    border: 1px solid #30363d;
+    padding: 20px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #161b22, #0d1117);
+}
+.fire-text {
+    color: #ff4b4b;
+    font-weight: bold;
+    text-shadow: 0 0 10px #ff4b4b;
+    animation: blinker 1.5s linear infinite;
+}
+@keyframes blinker { 50% { opacity: 0.3; } }
+</style>
+""", unsafe_allow_html=True)
 
 # 3. Sidebar Neural Control
 with st.sidebar:
@@ -86,17 +87,16 @@ with col_left:
         "Nemra 6": [30.597, 32.275],
         "University": [30.622, 32.268]
     }
-    
+
     if mode == "🚨 FIRE EMERGENCY":
         target = "Sheikh Zayed District"
         st.markdown(f"### ⚠️ <span class='fire-text'>INCIDENT DETECTED: {target}</span>", unsafe_allow_html=True)
-        
-        # Dispatch logic & Telegram
+
         if enable_tg:
             alert_text = f"🚨 PYROVISION ALERT:\nFire detected in {target}!\nTime: {datetime.now().strftime('%H:%M:%S')}"
             send_telegram_alert(alert_text)
             st.toast("Emergency alert sent to Telegram!", icon="📲")
-            
+
         df_map = pd.DataFrame([ismailia_zones["Sheikh Zayed"]], columns=['lat', 'lon'])
         st.map(df_map, zoom=15, color='#ff4b4b')
     else:
@@ -106,25 +106,55 @@ with col_left:
 
 with col_right:
     st.subheader("📊 Sensor Fusion Stream")
+
+    # Simulated realistic data
+    base_temp = 25 if mode == "🟢 SCANNING MODE" else 80
+    heat_values = np.cumsum(np.random.normal(0.3 if mode == "🚨 FIRE EMERGENCY" else 0.05, 0.2, 10)) + base_temp
+    smoke_values = np.cumsum(np.random.normal(0.4 if mode == "🚨 FIRE EMERGENCY" else 0.05, 0.15, 10)) + (5 if mode == "🟢 SCANNING MODE" else 60)
+
     chart_data = pd.DataFrame({
         'Time': pd.date_range(datetime.now(), periods=10, freq='S'),
-        'Heat Index (°C)': np.random.uniform(22, 28, 10) if mode == "🟢 SCANNING MODE" else np.random.uniform(70, 110, 10),
-        'Smoke Density (%)': np.random.uniform(2, 10, 10) if mode == "🟢 SCANNING MODE" else np.random.uniform(60, 95, 10)
+        'Heat Index (°C)': heat_values,
+        'Smoke Density (%)': smoke_values
     })
-    
-    fig = px.line(chart_data, x='Time', y=['Heat Index (°C)', 'Smoke Density (%)'], 
+
+    # Plotly chart
+    fig = px.line(chart_data, x='Time', y=['Heat Index (°C)', 'Smoke Density (%)'],
                   template="plotly_dark", color_discrete_sequence=['#00ffcc', '#ff4b4b'])
     fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
-    with st.expander("🛠️ Emergency Countermeasures"):
-        if mode == "🚨 FIRE EMERGENCY":
-            st.warning("1. Civil Defense Units Dispatched")
-            if st.button("ACTIVATE SPRINKLERS"):
-                st.snow()
-                st.success("Sprinklers engaged in Sector B.")
-        else:
-            st.info("System on standby. All nodes reporting normal values.")
+    # 🔍 Seaborn Heat Map
+    st.subheader("Seaborn Heat Map")
+    fig2, ax = plt.subplots()
+    sns.heatmap(chart_data[['Heat Index (°C)', 'Smoke Density (%)']], cmap="coolwarm", annot=True, ax=ax)
+    st.pyplot(fig2)
+
+    # 💾 Save data to CSV
+    if st.button("💾 Save Sensor Data"):
+        chart_data.to_csv('sensor_log.csv', index=False)
+        st.success("Data saved to sensor_log.csv")
+
+    # 🤖 Simple AI Prediction
+    X = chart_data[['Heat Index (°C)', 'Smoke Density (%)']]
+    y = np.where(chart_data['Heat Index (°C)'] > 50, 1, 0)
+    model = LogisticRegression()
+    model.fit(X, y)
+    pred = model.predict([[chart_data['Heat Index (°C)'].iloc[-1], chart_data['Smoke Density (%)'].iloc[-1]]])[0]
+
+    if pred == 1:
+        st.error("🔥 AI Prediction: Potential Fire Risk Detected!", icon="🚨")
+    else:
+        st.success("✅ AI Prediction: System Normal", icon="🟢")
+
+with st.expander("🛠️ Emergency Countermeasures"):
+    if mode == "🚨 FIRE EMERGENCY":
+        st.warning("1. Civil Defense Units Dispatched")
+        if st.button("ACTIVATE SPRINKLERS"):
+            st.snow()
+            st.success("Sprinklers engaged in Sector B.")
+    else:
+        st.info("System on standby. All nodes reporting normal values.")
 
 st.divider()
 st.markdown("<center>© 2026 PyroVision AI - Ismailia WE Applied Technology School</center>", unsafe_allow_html=True)
