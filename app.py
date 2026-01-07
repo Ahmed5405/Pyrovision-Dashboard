@@ -135,17 +135,21 @@ with col_right:
         chart_data.to_csv('sensor_log.csv', index=False)
         st.success("Data saved to sensor_log.csv")
 
-    # 🤖 Simple AI Prediction
+    # 🤖 Simple AI Prediction with Fix
     X = chart_data[['Heat Index (°C)', 'Smoke Density (%)']]
     y = np.where(chart_data['Heat Index (°C)'] > 50, 1, 0)
-    model = LogisticRegression()
-    model.fit(X, y)
-    pred = model.predict([[chart_data['Heat Index (°C)'].iloc[-1], chart_data['Smoke Density (%)'].iloc[-1]]])[0]
 
-    if pred == 1:
-        st.error("🔥 AI Prediction: Potential Fire Risk Detected!", icon="🚨")
+    if len(np.unique(y)) > 1:
+        model = LogisticRegression()
+        model.fit(X, y)
+        pred = model.predict([[chart_data['Heat Index (°C)'].iloc[-1], chart_data['Smoke Density (%)'].iloc[-1]]])[0]
+
+        if pred == 1:
+            st.error("🔥 AI Prediction: Potential Fire Risk Detected!", icon="🚨")
+        else:
+            st.success("✅ AI Prediction: System Normal", icon="🟢")
     else:
-        st.success("✅ AI Prediction: System Normal", icon="🟢")
+        st.info("Not enough data variety for AI prediction at the moment.")
 
 with st.expander("🛠️ Emergency Countermeasures"):
     if mode == "🚨 FIRE EMERGENCY":
@@ -158,4 +162,3 @@ with st.expander("🛠️ Emergency Countermeasures"):
 
 st.divider()
 st.markdown("<center>© 2026 PyroVision AI - Ismailia WE Applied Technology School</center>", unsafe_allow_html=True)
-
