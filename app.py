@@ -10,7 +10,7 @@ def send_telegram_alert(message):
     # Your Bot Token from BotFather
     token = "8525068051:AAHheDTQ-PIXEWvvIIcokuKF3pwyHr0gPwE"
     # Your Personal Chat ID (Replace with your ID from @userinfobot)
-    chat_id = "6155928163" 
+    chat_id = "1655340743" 
     url = f"https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}"
     try:
         requests.get(url, timeout=5)
@@ -128,3 +128,4 @@ with col_right:
 
 st.divider()
 st.markdown("<center>© 2026 PyroVision AI - Ismailia WE Applied Technology School</center>", unsafe_allow_html=True)
+
