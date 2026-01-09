@@ -109,7 +109,7 @@ with col_trend:
         color_discrete_sequence=['#ff4b4b', '#808080'],
         template="plotly_dark"
     )
-    fig_trend.update_layout(height=350, bg_color='rgba(0,0,0,0)')
+    fig_trend.update_layout(height=350, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig_trend, use_container_width=True)
 
 st.divider()
@@ -170,3 +170,4 @@ with col3:
 
 st.divider()
 st.markdown("<center>Developed by <b>Ahmed & The Team</b> | WE School Ismailia © 2026</center>", unsafe_allow_html=True)
+
